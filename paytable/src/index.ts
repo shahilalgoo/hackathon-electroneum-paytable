@@ -1,7 +1,8 @@
 import { generateSharePaytable } from "./share-based-paytable";
+import { logEntireArray } from "./utils/log-entire-array";
 
-const shareBasedPaytable = generateSharePaytable(10, 500);
+const shareBasedPaytable = generateSharePaytable(200, 5000);
 
-console.log(shareBasedPaytable);
+logEntireArray(shareBasedPaytable);
 
 
