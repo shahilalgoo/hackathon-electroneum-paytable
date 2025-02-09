@@ -2,10 +2,12 @@
 import { RoundToDP } from "./utils/round-dp";
 import { sumPayTable } from "./utils/sum-paytable";
 
-export function generateSharePaytable(paidPlaces: number, prizePool: number) {
+const defaultAddedSharesForTop = 0.2; // 20%
+
+export function generateSharePaytable(paidPlaces: number, prizePool: number, sharesOnTopPercentage?: number) {
     let payTable: number[] = new Array(paidPlaces).fill(0);
     
-    const {share, sharesOnTop} = getShareAmount(paidPlaces);
+    const {share, sharesOnTop} = getShareAmount(paidPlaces, sharesOnTopPercentage ? sharesOnTopPercentage : defaultAddedSharesForTop);
 
     // Sharing between all places
     for (let i = 0; i < paidPlaces; i++) {
@@ -42,7 +44,8 @@ export function generateSharePaytable(paidPlaces: number, prizePool: number) {
     }
 
     // Multiply each element by prizePool
-    payTable = payTable.map(element => RoundToDP(element * prizePool, 3));
+    const decimalPlaces = 9;
+    payTable = payTable.map(element => RoundToDP(element * prizePool, decimalPlaces));
 
     // Find total in paytable
     const totalInPayTable = sumPayTable(payTable);
@@ -50,19 +53,20 @@ export function generateSharePaytable(paidPlaces: number, prizePool: number) {
     // If total is more, remove difference from 1st place
     if (totalInPayTable > prizePool) {
         payTable[0] -= (totalInPayTable - prizePool);
-        payTable[0] = RoundToDP(payTable[0], 3);
+        payTable[0] = RoundToDP(payTable[0], decimalPlaces);
     }
 
     return payTable;
 
 }
 
-export function getShareAmount(paidPlaces: number) {
+export function getShareAmount(paidPlaces: number, sharesOnTopPercentage?: number) {
     // Amount of shares using a triangular number derived from paidPlaces
     const shares = (paidPlaces * (paidPlaces + 1)) / 2;
 
-    // add 10% more shares to be shared for the top only
-    const sharesOnTop = Math.round(shares * 0.2);
+    // Add a % more shares to be shared for the top only, 20% by default
+    const percentageAddedShares = sharesOnTopPercentage ? sharesOnTopPercentage : defaultAddedSharesForTop;
+    const sharesOnTop = Math.round(shares * percentageAddedShares);
     const sharesTotal = shares + sharesOnTop;
     const share = 1 / sharesTotal;
     return {share, sharesOnTop};

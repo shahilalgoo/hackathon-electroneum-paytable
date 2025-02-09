@@ -4,12 +4,15 @@
     "description": "paytable for tournaments",
     "main": "dist/index.js",
     "scripts": {
-      "build": "tsc",
-      "start": "tsc && node dist/index.js",
-      "watch": "tsc -w"
+        "build": "tsc",
+        "start": "tsc && node dist/index.js",
+        "watch": "tsc -w"
     },
     "devDependencies": {
-      "@types/node": "^20.11.0",
-      "typescript": "^5.3.3"
+        "@types/node": "^20.11.0",
+        "typescript": "^5.3.3"
+    },
+    "dependencies": {
+        "node-color-log": "^12.0.1"
     }
-  }
+}

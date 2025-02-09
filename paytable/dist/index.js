@@ -4,12 +4,23 @@ const share_based_paytable_1 = require("./share-based-paytable");
 const round_dp_1 = require("./utils/round-dp");
 const log_entire_array_1 = require("./utils/log-entire-array");
 const sum_paytable_1 = require("./utils/sum-paytable");
+// Color Logger
+const logger = require('node-color-log');
+// Inputs
+const ticketPrice = 0.000012;
+const totalParticipants = 2;
 // Constants
 const prizePoolShare = 0.7; // 70 percent of revenue goes to the prize pool // ❗
 const totalPaidPercentage = 0.3; // 30 percent of total participants will be paid // ❗
-// Inputs
-const ticketPrice = 2;
-const totalParticipants = 120;
+// Minimum participants check
+if (totalParticipants < 2) {
+    logger.error("Total participants must be at least 2");
+    process.exit(1);
+}
+if (ticketPrice < 0) {
+    logger.error("Price cannot be negative");
+    process.exit(1);
+}
 // Variables 
 let totalPrizePool = 0;
 let totalInPaytable = 0;
@@ -18,6 +29,19 @@ let totalPlacesPaid = 0;
 totalPrizePool = prizePoolShare * totalParticipants * ticketPrice;
 // Calculate paid places, rounded down 
 totalPlacesPaid = Math.floor(totalPaidPercentage * totalParticipants);
+const minPaidPlacesToUseSharePaytableOnly = 4;
+if (totalPlacesPaid <= minPaidPlacesToUseSharePaytableOnly) {
+    let sharesOnTopPercentage = 0.1;
+    if (totalParticipants < 10) {
+        totalPlacesPaid = Math.round(totalPaidPercentage * totalParticipants); // rounding instead of flooring
+        sharesOnTopPercentage = 0;
+    }
+    const payTable = (0, share_based_paytable_1.generateSharePaytable)(totalPlacesPaid, totalPrizePool, sharesOnTopPercentage);
+    totalInPaytable = (0, sum_paytable_1.sumPayTable)(payTable);
+    (0, log_entire_array_1.logEntireArray)(payTable);
+    console.log("Total in Paytable:", totalInPaytable);
+    process.exit(0);
+}
 // Initialize paytable
 const payTable = new Array(totalPlacesPaid).fill(0);
 // 2/3 of the bottom paytable with get their money back
@@ -28,7 +52,8 @@ for (let i = totalPlacesPaid - moneyBackTotalPlayers; i < totalPlacesPaid; i++) 
 }
 const top10PercentPlaces = totalPlacesPaid - moneyBackTotalPlayers;
 const inbetweenersMultiplier = 2;
-let toppersAmount = Math.floor(top10PercentPlaces * 0.3);
+let toppersAmount = top10PercentPlaces;
+console.log("Initial Toppers Calculated:", toppersAmount);
 let inbetweenerReward = 0;
 let moneyInbetweenersTotal = 0;
 let lastTopperReward = 0;
@@ -56,6 +81,9 @@ for (let i = toppersAmount; i < top10PercentPlaces; i++) {
     payTable[i] = (0, round_dp_1.RoundToDP)(inbetweenerReward, 3);
 }
 totalInPaytable = (0, sum_paytable_1.sumPayTable)(payTable);
+logger.color('red').log("=======================================================================");
+logger.color('red').log("=======================================================================");
+logger.color('red').log("=======================================================================");
 (0, log_entire_array_1.logEntireArray)(payTable);
 console.log("Players:", totalParticipants, " Price:", ticketPrice);
 console.log("Prize Pool: ", totalPrizePool);
@@ -63,3 +91,6 @@ console.log("Total money back (bottom 2/3 players):", moneyBackTotal);
 console.log("Money left after money back:", totalPrizePool - moneyBackTotal);
 console.log("Total for inbetweeners", moneyInbetweenersTotal);
 console.log("Total in Paytable:", totalInPaytable);
+logger.color('red').log("=======================================================================");
+logger.color('red').log("=======================================================================");
+logger.color('red').log("=======================================================================");
