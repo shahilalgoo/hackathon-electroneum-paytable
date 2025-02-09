@@ -5,11 +5,12 @@ const get_decimal_places_1 = require("./utils/get-decimal-places");
 const round_dp_1 = require("./utils/round-dp");
 const sum_paytable_1 = require("./utils/sum-paytable");
 const log_entire_array_1 = require("./utils/log-entire-array");
+const calculate_optimal_toppers_1 = require("./utils/calculate-optimal-toppers");
 // Color Logger
 const logger = require('node-color-log');
 // Inputs
-const ticketPrice = 0.075;
-const totalParticipants = 3957;
+const ticketPrice = 1;
+const totalParticipants = 79;
 // Constants
 const prizePoolShare = 0.7; // 70% of revenue goes to the prize pool // ❗
 const totalPaidPercentage = 0.3; // 30% of total participants will be paid // ❗
@@ -60,40 +61,27 @@ for (let i = totalPlacesPaid - moneyBackTotalPlayers; i < totalPlacesPaid; i++) 
 }
 // The top 1/3 (also means top 10% of players overall) are split into 2 groups
 // Toppers: Those who get increasing amount of payouts
-// Inbetweeners: Those who get a multiplier on the ticket price
+// Inbetweeners: Those who get a multiplier on the ticket price. All inbetweeners receive the same amount
 const top10PercentPlaces = totalPlacesPaid - moneyBackTotalPlayers;
 const inbetweenersMultiplier = 2;
-// The top 10% are all initially toppers, the while loop below will determine the final amount of toppers 
-let toppersAmount = top10PercentPlaces;
-console.log("Initial Toppers:", toppersAmount);
-let inbetweenerReward = 0;
-let moneyInbetweenersTotal = 0;
-let lastTopperReward = 0;
-let toppersPrizePool = 0;
-while (lastTopperReward <= inbetweenerReward) {
-    let inbetweenersAmount = top10PercentPlaces - toppersAmount;
-    moneyInbetweenersTotal = inbetweenersAmount * ticketPrice * inbetweenersMultiplier;
-    const { share } = (0, share_based_paytable_1.getShareAmount)(toppersAmount);
-    toppersPrizePool = totalPrizePool - (moneyBackTotal + moneyInbetweenersTotal);
-    // The last topper gets only 1 share in a share based paytable
-    lastTopperReward = share * toppersPrizePool;
-    inbetweenerReward = ticketPrice * inbetweenersMultiplier;
-    // Adjust topper amount until the last topper receives more than the inbetweeners
-    if (lastTopperReward < inbetweenerReward)
-        toppersAmount--;
-    if (toppersAmount < 0) {
-        logger.error("Not enough money in prize pool for this payout structure");
-        process.exit(1);
-    }
+// Calculate amount of toppers so that the last topper receives more than an inbetweeners 
+const { toppersAmount, toppersPrizePool } = (0, calculate_optimal_toppers_1.calculateOptimalToppers)(totalPrizePool, ticketPrice, top10PercentPlaces, moneyBackTotal, inbetweenersMultiplier, decimalPlacesUsed);
+if (toppersAmount < 1) {
+    logger.error("Not enough money in prize pool for this payout structure");
+    process.exit(1);
 }
-console.log("Toppers:", toppersAmount);
+// Generate the share based paytable for toppers
 const toppersTable = (0, share_based_paytable_1.generateSharePaytable)(toppersAmount, toppersPrizePool, decimalPlacesUsed);
+// Fill in toppers' reward
 for (let i = 0; i < toppersTable.length; i++) {
     payTable[i] = toppersTable[i];
 }
+// Fill in inbetweeners' reward
+const inbetweenerReward = ticketPrice * inbetweenersMultiplier;
 for (let i = toppersAmount; i < top10PercentPlaces; i++) {
     payTable[i] = (0, round_dp_1.RoundToDP)(inbetweenerReward, decimalPlacesUsed);
 }
+// Find total
 totalInPaytable = (0, sum_paytable_1.sumPayTable)(payTable, decimalPlacesUsed);
 logger.color('red').log("=======================================================================");
 logger.color('red').log("=======================================================================");
@@ -101,10 +89,11 @@ logger.color('red').log("=======================================================
 (0, log_entire_array_1.logEntireArray)(payTable);
 console.log("Players:", totalParticipants, " Price:", ticketPrice);
 console.log("Prize Pool: ", totalPrizePool);
-console.log("Total money back (bottom 2/3 players):", moneyBackTotal);
-console.log("Money left after money back:", totalPrizePool - moneyBackTotal);
-console.log("Total for inbetweeners", moneyInbetweenersTotal);
 console.log("Total in Paytable:", totalInPaytable);
+console.log("Toppers:", toppersAmount);
+// console.log("Total money back (bottom 2/3 players):", moneyBackTotal);
+// console.log("Money left after money back:", totalPrizePool - moneyBackTotal);
+// console.log("Total for inbetweeners", moneyInbetweenersTotal);
 logger.color('red').log("=======================================================================");
 logger.color('red').log("=======================================================================");
 logger.color('red').log("=======================================================================");
