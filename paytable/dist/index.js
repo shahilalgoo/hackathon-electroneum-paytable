@@ -1,18 +1,18 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const share_based_paytable_1 = require("./share-based-paytable");
-const round_dp_1 = require("./utils/round-dp");
-const log_entire_array_1 = require("./utils/log-entire-array");
-const sum_paytable_1 = require("./utils/sum-paytable");
 const get_decimal_places_1 = require("./utils/get-decimal-places");
+const round_dp_1 = require("./utils/round-dp");
+const sum_paytable_1 = require("./utils/sum-paytable");
+const log_entire_array_1 = require("./utils/log-entire-array");
 // Color Logger
 const logger = require('node-color-log');
 // Inputs
-const ticketPrice = 0.00000000213002;
-const totalParticipants = 256;
+const ticketPrice = 0.075;
+const totalParticipants = 3957;
 // Constants
-const prizePoolShare = 0.7; // 70 percent of revenue goes to the prize pool // ❗
-const totalPaidPercentage = 0.3; // 30 percent of total participants will be paid // ❗
+const prizePoolShare = 0.7; // 70% of revenue goes to the prize pool // ❗
+const totalPaidPercentage = 0.3; // 30% of total participants will be paid // ❗
 // Always use 3 decimal places more than that of the ticket price
 const decimalPlacesUsed = (0, get_decimal_places_1.getDecimalPlaces)(ticketPrice) + 3;
 // Minimum participants check
@@ -20,6 +20,7 @@ if (totalParticipants < 2) {
     logger.error("Total participants must be at least 2");
     process.exit(1);
 }
+// Check price
 if (ticketPrice < 0) {
     logger.error("Price cannot be negative");
     process.exit(1);
@@ -32,48 +33,58 @@ let totalPlacesPaid = 0;
 totalPrizePool = prizePoolShare * totalParticipants * ticketPrice;
 // Calculate paid places, rounded down 
 totalPlacesPaid = Math.floor(totalPaidPercentage * totalParticipants);
+// For low participation numbers, we go directly to using share based paytable
 const minPaidPlacesToUseSharePaytableOnly = 4;
 if (totalPlacesPaid <= minPaidPlacesToUseSharePaytableOnly) {
+    // For low participants, we decrease the amount of shares for the top
     let sharesOnTopPercentage = 0.1;
     if (totalParticipants < 10) {
-        totalPlacesPaid = Math.round(totalPaidPercentage * totalParticipants); // rounding instead of flooring
-        sharesOnTopPercentage = 0;
+        totalPlacesPaid = Math.round(totalPaidPercentage * totalParticipants); // rounding instead of flooring so we get 1 more paid places in some cases
+        sharesOnTopPercentage = 0; // Cancel the shares on top
     }
+    // Generate paytable & sum up
     const payTable = (0, share_based_paytable_1.generateSharePaytable)(totalPlacesPaid, totalPrizePool, decimalPlacesUsed, sharesOnTopPercentage);
     totalInPaytable = (0, sum_paytable_1.sumPayTable)(payTable, decimalPlacesUsed);
     (0, log_entire_array_1.logEntireArray)(payTable);
     console.log("Total in Paytable:", totalInPaytable);
     process.exit(0);
 }
+/** FOR HIGHER PARTICIPATION NUMBER, THOSE WITH MORE PAID PLACES THAN MENTIONED ABOVE**/
 // Initialize paytable
 const payTable = new Array(totalPlacesPaid).fill(0);
-// 2/3 of the bottom paytable with get their money back
+// 2/3 of the bottom paytable get their money back
 const moneyBackTotalPlayers = Math.round((2 / 3) * payTable.length);
 const moneyBackTotal = moneyBackTotalPlayers * ticketPrice;
 for (let i = totalPlacesPaid - moneyBackTotalPlayers; i < totalPlacesPaid; i++) {
     payTable[i] = ticketPrice;
 }
+// The top 1/3 (also means top 10% of players overall) are split into 2 groups
+// Toppers: Those who get increasing amount of payouts
+// Inbetweeners: Those who get a multiplier on the ticket price
 const top10PercentPlaces = totalPlacesPaid - moneyBackTotalPlayers;
 const inbetweenersMultiplier = 2;
+// The top 10% are all initially toppers, the while loop below will determine the final amount of toppers 
 let toppersAmount = top10PercentPlaces;
-console.log("Initial Toppers Calculated:", toppersAmount);
+console.log("Initial Toppers:", toppersAmount);
 let inbetweenerReward = 0;
 let moneyInbetweenersTotal = 0;
 let lastTopperReward = 0;
 let toppersPrizePool = 0;
 while (lastTopperReward <= inbetweenerReward) {
-    let inbetweenersAmount = top10PercentPlaces < toppersAmount ? 0 : top10PercentPlaces - toppersAmount;
-    if (top10PercentPlaces < toppersAmount)
-        toppersAmount = top10PercentPlaces;
+    let inbetweenersAmount = top10PercentPlaces - toppersAmount;
     moneyInbetweenersTotal = inbetweenersAmount * ticketPrice * inbetweenersMultiplier;
     const { share } = (0, share_based_paytable_1.getShareAmount)(toppersAmount);
     toppersPrizePool = totalPrizePool - (moneyBackTotal + moneyInbetweenersTotal);
-    // the last topper gets only 1 share
+    // The last topper gets only 1 share in a share based paytable
     lastTopperReward = share * toppersPrizePool;
     inbetweenerReward = ticketPrice * inbetweenersMultiplier;
-    // adjust topper amount until the last topper receives more than the inbetweeners
+    // Adjust topper amount until the last topper receives more than the inbetweeners
     if (lastTopperReward < inbetweenerReward)
         toppersAmount--;
+    if (toppersAmount < 0) {
+        logger.error("Not enough money in prize pool for this payout structure");
+        process.exit(1);
+    }
 }
 console.log("Toppers:", toppersAmount);
 const toppersTable = (0, share_based_paytable_1.generateSharePaytable)(toppersAmount, toppersPrizePool, decimalPlacesUsed);
