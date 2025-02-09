@@ -6,7 +6,7 @@ exports.getShareAmount = getShareAmount;
 const round_dp_1 = require("./utils/round-dp");
 const sum_paytable_1 = require("./utils/sum-paytable");
 const defaultAddedSharesForTop = 0.2; // 20%
-function generateSharePaytable(paidPlaces, prizePool, sharesOnTopPercentage) {
+function generateSharePaytable(paidPlaces, prizePool, decimalPlaces, sharesOnTopPercentage) {
     let payTable = new Array(paidPlaces).fill(0);
     const { share, sharesOnTop } = getShareAmount(paidPlaces, sharesOnTopPercentage ? sharesOnTopPercentage : defaultAddedSharesForTop);
     // Sharing between all places
@@ -42,10 +42,9 @@ function generateSharePaytable(paidPlaces, prizePool, sharesOnTopPercentage) {
         payTable[i] += (freqTableForTop[i] * sharesOnTop) * share;
     }
     // Multiply each element by prizePool
-    const decimalPlaces = 9;
     payTable = payTable.map(element => (0, round_dp_1.RoundToDP)(element * prizePool, decimalPlaces));
     // Find total in paytable
-    const totalInPayTable = (0, sum_paytable_1.sumPayTable)(payTable);
+    const totalInPayTable = (0, sum_paytable_1.sumPayTable)(payTable, decimalPlaces);
     // If total is more, remove difference from 1st place
     if (totalInPayTable > prizePool) {
         payTable[0] -= (totalInPayTable - prizePool);

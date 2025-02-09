@@ -2,17 +2,21 @@ import { generateSharePaytable, getShareAmount } from "./share-based-paytable";
 import { RoundToDP } from "./utils/round-dp";
 import { logEntireArray } from "./utils/log-entire-array";
 import { sumPayTable } from "./utils/sum-paytable";
+import { getDecimalPlaces } from "./utils/get-decimal-places";
 
 // Color Logger
 const logger = require('node-color-log');
 
 // Inputs
-const ticketPrice = 0.000012;
-const totalParticipants = 2;
+const ticketPrice = 0.00000000213002;
+const totalParticipants = 256;
 
 // Constants
 const prizePoolShare = 0.7; // 70 percent of revenue goes to the prize pool // ❗
 const totalPaidPercentage = 0.3; // 30 percent of total participants will be paid // ❗
+
+// Always use 3 decimal places more than that of the ticket price
+const decimalPlacesUsed = getDecimalPlaces(ticketPrice) + 3;
 
 // Minimum participants check
 if (totalParticipants < 2) {
@@ -46,8 +50,8 @@ if (totalPlacesPaid <= minPaidPlacesToUseSharePaytableOnly) {
         sharesOnTopPercentage = 0;
     }
 
-    const payTable = generateSharePaytable(totalPlacesPaid, totalPrizePool, sharesOnTopPercentage);
-    totalInPaytable = sumPayTable(payTable);
+    const payTable = generateSharePaytable(totalPlacesPaid, totalPrizePool, decimalPlacesUsed, sharesOnTopPercentage);
+    totalInPaytable = sumPayTable(payTable, decimalPlacesUsed);
 
     logEntireArray(payTable);
     console.log("Total in Paytable:", totalInPaytable);
@@ -95,17 +99,17 @@ while (lastTopperReward <= inbetweenerReward) {
 }
 
 console.log("Toppers:", toppersAmount);
-const toppersTable = generateSharePaytable(toppersAmount, toppersPrizePool);
+const toppersTable = generateSharePaytable(toppersAmount, toppersPrizePool, decimalPlacesUsed);
 
 for (let i = 0; i < toppersTable.length; i++) {
 payTable[i] = toppersTable[i];
 }
 
 for (let i = toppersAmount; i < top10PercentPlaces; i++) {
-payTable[i] = RoundToDP(inbetweenerReward, 3);
+payTable[i] = RoundToDP(inbetweenerReward, decimalPlacesUsed);
 }
 
-totalInPaytable = sumPayTable(payTable);
+totalInPaytable = sumPayTable(payTable, decimalPlacesUsed);
 
 logger.color('red').log("=======================================================================");
 logger.color('red').log("=======================================================================");

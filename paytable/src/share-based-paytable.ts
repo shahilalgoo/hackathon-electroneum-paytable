@@ -4,7 +4,7 @@ import { sumPayTable } from "./utils/sum-paytable";
 
 const defaultAddedSharesForTop = 0.2; // 20%
 
-export function generateSharePaytable(paidPlaces: number, prizePool: number, sharesOnTopPercentage?: number) {
+export function generateSharePaytable(paidPlaces: number, prizePool: number, decimalPlaces: number, sharesOnTopPercentage?: number) {
     let payTable: number[] = new Array(paidPlaces).fill(0);
     
     const {share, sharesOnTop} = getShareAmount(paidPlaces, sharesOnTopPercentage ? sharesOnTopPercentage : defaultAddedSharesForTop);
@@ -44,11 +44,10 @@ export function generateSharePaytable(paidPlaces: number, prizePool: number, sha
     }
 
     // Multiply each element by prizePool
-    const decimalPlaces = 9;
     payTable = payTable.map(element => RoundToDP(element * prizePool, decimalPlaces));
 
     // Find total in paytable
-    const totalInPayTable = sumPayTable(payTable);
+    const totalInPayTable = sumPayTable(payTable, decimalPlaces);
 
     // If total is more, remove difference from 1st place
     if (totalInPayTable > prizePool) {
