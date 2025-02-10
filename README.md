@@ -1,2 +1,2 @@
-# hackathon-electroneum-tournaments
+# hackathon-electroneum-paytable
  

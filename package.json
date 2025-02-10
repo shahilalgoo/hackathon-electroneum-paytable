@@ -1,7 +1,7 @@
 {
     "name": "electroplay-paytable",
     "version": "1.0.0",
-    "description": "paytable for tournaments",
+    "description": "paytable for competition pools",
     "main": "dist/index.js",
     "scripts": {
         "build": "tsc",
