@@ -9,8 +9,8 @@ import { calculateOptimalToppers } from "./utils/calculate-optimal-toppers";
 const logger = require('node-color-log');
 
 // Inputs
-const ticketPrice = 1;
-const totalParticipants = 79;
+const ticketPrice = 4200;
+const totalParticipants = 300;
 
 // Constants
 const prizePoolShare = 0.7; // 70% of revenue goes to the prize pool // ❗
@@ -122,9 +122,13 @@ logger.color('red').log("=======================================================
 
 logEntireArray(payTable);
 console.log("Players:", totalParticipants, " Price:", ticketPrice);
-console.log("Prize Pool: ", totalPrizePool);
+console.log("Prize Pool (70% of revenue): ", totalPrizePool);
 console.log("Total in Paytable:", totalInPaytable);
-console.log("Toppers:", toppersAmount);
+logger.color('red').log("------------------------------------------------------------------------");
+console.log("Paid Places (30%):", totalPlacesPaid);
+console.log("Players getting their money back:", moneyBackTotalPlayers);
+console.log("Players making 2x:", top10PercentPlaces - toppersAmount);
+console.log("Players making more than 2x:", toppersAmount);
 // console.log("Total money back (bottom 2/3 players):", moneyBackTotal);
 // console.log("Money left after money back:", totalPrizePool - moneyBackTotal);
 // console.log("Total for inbetweeners", moneyInbetweenersTotal);
