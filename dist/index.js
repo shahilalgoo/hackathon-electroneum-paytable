@@ -6,11 +6,12 @@ const round_dp_1 = require("./utils/round-dp");
 const sum_paytable_1 = require("./utils/sum-paytable");
 const log_entire_array_1 = require("./utils/log-entire-array");
 const calculate_optimal_toppers_1 = require("./utils/calculate-optimal-toppers");
+const round_down_exponential_1 = require("./utils/round-down-exponential");
 // Color Logger
 const logger = require('node-color-log');
 // Inputs
-const ticketPrice = 4200;
-const totalParticipants = 300;
+const ticketPrice = 16000000000000000000000000000;
+const totalParticipants = 60;
 // Constants
 const prizePoolShare = 0.7; // 70% of revenue goes to the prize pool // ❗
 const totalPaidPercentage = 0.3; // 30% of total participants will be paid // ❗
@@ -44,15 +45,23 @@ if (totalPlacesPaid <= minPaidPlacesToUseSharePaytableOnly) {
         sharesOnTopPercentage = 0; // Cancel the shares on top
     }
     // Generate paytable & sum up
-    const payTable = (0, share_based_paytable_1.generateSharePaytable)(totalPlacesPaid, totalPrizePool, decimalPlacesUsed, sharesOnTopPercentage);
+    let payTable = (0, share_based_paytable_1.generateSharePaytable)(totalPlacesPaid, totalPrizePool, decimalPlacesUsed, sharesOnTopPercentage);
+    payTable = (0, round_down_exponential_1.removeExcessPrecision)(payTable);
     totalInPaytable = (0, sum_paytable_1.sumPayTable)(payTable, decimalPlacesUsed);
+    // for (let i = 0; i < payTable.length; i++) { 
+    //     const roundedDown = roundDownExponential(payTable[i], 10);
+    //     console.log(roundedDown);
+    //     console.log(roundedDown.toLocaleString('fullwide', { useGrouping: false }));
+    //     console.log(payTable[i].toLocaleString('fullwide', { useGrouping: false }));
+    // }
     (0, log_entire_array_1.logEntireArray)(payTable);
     console.log("Total in Paytable:", totalInPaytable);
+    console.log("Prize pool:", totalPrizePool);
     process.exit(0);
 }
 /** FOR HIGHER PARTICIPATION NUMBER, THOSE WITH MORE PAID PLACES THAN MENTIONED ABOVE**/
 // Initialize paytable
-const payTable = new Array(totalPlacesPaid).fill(0);
+let payTable = new Array(totalPlacesPaid).fill(0);
 // 2/3 of the bottom paytable get their money back
 const moneyBackTotalPlayers = Math.round((2 / 3) * payTable.length);
 const moneyBackTotal = moneyBackTotalPlayers * ticketPrice;
@@ -82,6 +91,7 @@ for (let i = toppersAmount; i < top10PercentPlaces; i++) {
     payTable[i] = (0, round_dp_1.RoundToDP)(inbetweenerReward, decimalPlacesUsed);
 }
 // Find total
+// payTable = removeExcessPrecision(payTable);
 totalInPaytable = (0, sum_paytable_1.sumPayTable)(payTable, decimalPlacesUsed);
 logger.color('red').log("=======================================================================");
 logger.color('red').log("=======================================================================");

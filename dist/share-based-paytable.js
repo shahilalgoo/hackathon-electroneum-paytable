@@ -8,7 +8,7 @@ const sum_paytable_1 = require("./utils/sum-paytable");
 const defaultAddedSharesForTop = 0.2; // 20%
 function generateSharePaytable(paidPlaces, prizePool, decimalPlaces, sharesOnTopPercentage) {
     let payTable = new Array(paidPlaces).fill(0);
-    const { share, sharesOnTop } = getShareAmount(paidPlaces, sharesOnTopPercentage ? sharesOnTopPercentage : defaultAddedSharesForTop);
+    let { share, sharesOnTop } = getShareAmount(paidPlaces, sharesOnTopPercentage ? sharesOnTopPercentage : defaultAddedSharesForTop);
     // Sharing between all places
     for (let i = 0; i < paidPlaces; i++) {
         const innerLoopTotal = paidPlaces - i;
@@ -48,7 +48,11 @@ function generateSharePaytable(paidPlaces, prizePool, decimalPlaces, sharesOnTop
     // If total is more, remove difference from 1st place
     if (totalInPayTable > prizePool) {
         payTable[0] -= (totalInPayTable - prizePool);
-        payTable[0] = (0, round_dp_1.RoundToDP)(payTable[0], decimalPlaces);
+        // payTable[0] = RoundToDP(payTable[0], decimalPlaces);
+    }
+    else if (totalInPayTable < prizePool) {
+        payTable[0] += (prizePool - totalInPayTable);
+        // payTable[0] = RoundToDP(payTable[0], decimalPlaces);
     }
     return payTable;
 }

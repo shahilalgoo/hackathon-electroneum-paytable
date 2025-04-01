@@ -7,7 +7,7 @@ const defaultAddedSharesForTop = 0.2; // 20%
 export function generateSharePaytable(paidPlaces: number, prizePool: number, decimalPlaces: number, sharesOnTopPercentage?: number) {
     let payTable: number[] = new Array(paidPlaces).fill(0);
     
-    const {share, sharesOnTop} = getShareAmount(paidPlaces, sharesOnTopPercentage ? sharesOnTopPercentage : defaultAddedSharesForTop);
+    let {share, sharesOnTop} = getShareAmount(paidPlaces, sharesOnTopPercentage ? sharesOnTopPercentage : defaultAddedSharesForTop);
 
     // Sharing between all places
     for (let i = 0; i < paidPlaces; i++) {
@@ -52,7 +52,11 @@ export function generateSharePaytable(paidPlaces: number, prizePool: number, dec
     // If total is more, remove difference from 1st place
     if (totalInPayTable > prizePool) {
         payTable[0] -= (totalInPayTable - prizePool);
-        payTable[0] = RoundToDP(payTable[0], decimalPlaces);
+        // payTable[0] = RoundToDP(payTable[0], decimalPlaces);
+    } 
+    else if (totalInPayTable < prizePool) {
+        payTable[0] += (prizePool - totalInPayTable);
+        // payTable[0] = RoundToDP(payTable[0], decimalPlaces);
     }
 
     return payTable;
